@@ -120,7 +120,6 @@ app.post('/login', passport.authenticate('local', {
     io.emit('register', req.user._id); // Register the socket ID after login
 });
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
 
     // When a user registers, update their socket ID
     socket.on('register', (userId) => {
@@ -135,7 +134,6 @@ io.on('connection', (socket) => {
     
         // Register the new socket ID
         onlineUsers.set(userId, socket.id);
-        console.log(`User ${userId} registered with socket ${socket.id}`);
     
         // Notify others this user is online
         socket.broadcast.emit('user status', { userId, status: 'online' });
@@ -239,7 +237,7 @@ app.get('/:id/privatechat/:otherId', isLoggedIn, async (req, res) => {
 });
 // Start server
 server.listen(10000, () => {
-    console.log('Server is running on port 8080');
+    console.log('Server is running on port 10000');
 });
 
 
