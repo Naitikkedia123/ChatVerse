@@ -453,5 +453,77 @@
       padding-bottom: 80px; /* prevent message bar from overlapping messages */
     }
   }
+  .chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #e7e4f8;
+    background-image: radial-gradient(#c9c4f5 1px, transparent 1px);
+    background-size: 20px 20px;
+    backdrop-filter: blur(6px);
+    color: #3d2e8c;
+    position: relative;
+  }
+  
+  #chat-box {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 100px; /* prevents input from overlapping messages */
+  }
+  
+  form#form {
+    display: flex;
+    gap: 10px;
+    padding: 1rem;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  form#form input {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  
+  form#form button {
+    background-color: #7b5df5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  form#form button:hover {
+    background-color: #5e44d0;
+  }
+  
+  @media (max-width: 768px) {
+    #chat-box {
+      padding-bottom: 120px; /* more space for input bar on mobile */
+    }
+  
+    form#form {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background-color: white;
+    }
+  }
   
   
