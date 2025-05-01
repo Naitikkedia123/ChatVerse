@@ -76,10 +76,15 @@
   
     searchInput.addEventListener('input', () => {
       const query = searchInput.value.toLowerCase();
-  
       userCards.forEach(card => {
         const username = card.dataset.username;
         card.style.display = username.includes(query) ? 'block' : 'none';
+      });
+    });
+    document.getElementById('user-search').addEventListener('input', e => {
+      const query = e.target.value.toLowerCase();
+      document.querySelectorAll('.user-card').forEach(card => {
+        card.style.display = card.dataset.username.includes(query) ? 'block' : 'none';
       });
     });
     socket.on('user status', ({ userId, status }) => {
