@@ -412,7 +412,7 @@
       border-radius: 6px;
       padding: 0.4rem 0.8rem;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 2rem;
       transition: background 0.3s;
     }
   
@@ -434,6 +434,23 @@
   
     #chat-box {
       padding-bottom: 80px; /* leave space for fixed input */
+    }
+  }
+  @media (max-width: 768px) {
+    #form {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+      z-index: 1000;
+      gap: 10px;
+    }
+  
+    #chat-box {
+      padding-bottom: 80px; /* prevent message bar from overlapping messages */
     }
   }
   
