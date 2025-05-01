@@ -6,6 +6,7 @@
   <title>ChatVerse</title>
   <link rel="icon" href="/uploads/logo.png" />
   <link rel="stylesheet" href="/privatechat.css" />
+  <link rel="icon" type="image/jpg" href="/downloa.jpg" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
 </head>
 <body>
@@ -69,7 +70,7 @@
         <% chats.forEach(chat => {
           const isSent = chat.from._id.toString() === currentUser._id.toString();
           const isUnread = chat.to._id.toString() === currentUser._id.toString() && chat.status !== 'read';
-          const time = new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const time = new Date(chat.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
         %>
           <div class="message <%= isSent ? 'sent' : 'received' %>" data-message-id="<%= chat._id %>" data-is-unread="<%= isUnread %>">
             <div><%= chat.msg %></div>
@@ -94,7 +95,6 @@
     </main>
   </div>
 
-  <!-- 🔊 Sound effect -->
   <audio id="chat-sound" src="/uploads/message-send-292621.mp3" preload="auto"></audio>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -128,8 +128,7 @@
         socket.emit('private message', {
           from: currentUserId,
           to: otherUserId,
-          msg: message,
-          createdAt: new Date().toISOString() // Send fixed timestamp
+          msg: message
         });
         input.value = '';
         playSound();
@@ -137,12 +136,17 @@
     });
 
     socket.on('private message', data => {
-      const time = new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(data.createdAt).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Kolkata'
+      });
+
       const messageElement = document.createElement('div');
-      const isSentByMe = data.from === currentUserId;
-      messageElement.classList.add('message', isSentByMe ? 'sent' : 'received');
+      messageElement.classList.add('message', data.from === currentUserId ? 'sent' : 'received');
       messageElement.dataset.messageId = data._id;
 
+      const isSentByMe = data.from === currentUserId;
       const tickHTML = isSentByMe
         ? `<span class="tick ${data.status === 'read' ? 'read' : ''}">
             ${data.status === 'read' || data.status === 'delivered' ? '✔✔' : '✔'}
