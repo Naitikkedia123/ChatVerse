@@ -23,7 +23,7 @@ const onlineUsers = new Map();
 
 // MongoDB connection
 async function main() {
-    await mongoose.connect('mongodb://localhost:27017');
+    await mongoose.connect('mongodb+srv://kedianaitik2:naitik123@cluster0.8gfvbxl.mongodb.net/');
     console.log('Connected to MongoDB');
 }
 main().catch(err => console.error(err));
@@ -38,7 +38,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use('/uploads', express.static('uploads')); // Serve uploaded images
 // Session store
 const store = MongoStore.create({
-    mongoUrl: 'mongodb://localhost:27017',
+    mongoUrl: 'mongodb+srv://kedianaitik2:naitik123@cluster0.8gfvbxl.mongodb.net/',
     crypto: { secret: 'your-secret-key' },
     touchAfter: 24 * 3600
 });
