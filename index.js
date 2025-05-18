@@ -12,17 +12,18 @@ const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const Chat = require('./models/chat');
 const { isLoggedIn } = require('./middleware');
-
+const GroupMessage = require('./models/groupMessage');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const Group = require('./models/group');
 // Store online users with their socket IDs
 const onlineUsers = new Map();
 
 // MongoDB connection
 async function main() {
-    await mongoose.connect('mongodb+srv://kedianaitik2006:naitik@cluster0.8gfvbxl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
+    await mongoose.connect('mongodb://localhost:27017');
     console.log('Connected to MongoDB');
 }
 main().catch(err => console.error(err));
@@ -37,10 +38,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.use('/uploads', express.static('uploads')); // Serve uploaded images
 // Session store
 const store = MongoStore.create({
-    mongoUrl: 'mongodb+srv://kedianaitik2006:naitik@cluster0.8gfvbxl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+    mongoUrl: 'mongodb://localhost:27017',
     crypto: { secret: 'your-secret-key' },
     touchAfter: 24 * 3600
 });
+
 
 const sessionOptions = {
     store,
@@ -70,7 +72,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('Welcome to WhatsApp Clone');
+    res.send('Welcome to ChatVerse!');
 });
 
 // Route to show users
@@ -83,8 +85,6 @@ app.get('/users', isLoggedIn, async (req, res) => {
         res.redirect('/login?status=error');
     }
 });
-
-
 app.get('/signup', (req, res) => {
     res.render('signup', { status: req.query.status });
 });
@@ -212,7 +212,71 @@ io.on('connection', (socket) => {
             }
         }
     });
+    socket.on('group message', async (data) => {
+        const { groupId, from, msg } = data;
+      
+        // Save group message
+        const groupMsg = new GroupMessage({
+          groupId,
+          from,
+          msg,
+          readBy: [from] // Sender has read it
+        });
+      
+        await groupMsg.save();
+      
+        // ✅ Populate sender so we have from._id and from.username
+        const populatedMsg = await groupMsg.populate('from', 'username');
+      
+        // ✅ Create payload with populated sender
+        const payload = {
+          _id: populatedMsg._id,
+          groupId,
+          from: populatedMsg.from, // has _id and username
+          msg: populatedMsg.msg,
+          createdAt: populatedMsg.createdAt,
+          readBy: populatedMsg.readBy
+        };
+      
+        // ✅ Emit to all group members
+        const group = await Group.findById(groupId).populate('members');
+        for (let member of group.members) {
+          const toSocket = onlineUsers.get(member._id.toString());
+          if (toSocket) {
+            io.to(toSocket).emit('group message', payload);
+          }
+        }
+      });
+      
     
+      // Handle group message read
+      socket.on('read group message', async ({ messageId, userId }) => {
+        const message = await GroupMessage.findById(messageId);
+        if (message && !message.readBy.includes(userId)) {
+          message.readBy.push(userId);
+          await message.save();
+    
+          const group = await Group.findById(message.groupId).populate('members');
+          for (let member of group.members) {
+            const toSocket = onlineUsers.get(member._id.toString());
+            if (toSocket) {
+              io.to(toSocket).emit('group message read', { messageId, userId });
+            }
+          }
+        }
+      });
+    
+});
+
+app.get('/groupchat', isLoggedIn, async (req, res) => {
+  try {
+    const groups = await Group.find({ members: req.user._id }).populate('members');
+    const users = await User.find({ _id: { $ne: req.user._id } });
+    res.render('groupchat.ejs', { groups, currentUser: req.user,users });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/users?status=error');
+  }
 });
 
 app.get('/:id/privatechat/:otherId', isLoggedIn, async (req, res) => {
@@ -233,6 +297,45 @@ app.get('/:id/privatechat/:otherId', isLoggedIn, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.redirect('/users?status=error');
+    }
+});
+app.post('/create/group', async (req, res) => {
+    const { name, members } = req.body;
+  
+    try {
+      const newGroup = new Group({
+        name,
+        members: [...members, req.user._id] // Add current user
+      });
+  
+      await newGroup.save();
+      res.status(200).json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Group creation failed' });
+    }
+  });
+  
+  app.get('/groupchat/:groupId', isLoggedIn, async (req, res) => {
+    const groupId = req.params.groupId;
+    try {
+        const group = await Group.findById(groupId).populate('members');
+        const users = await User.find({ _id: { $ne: req.user._id } });
+        const chats = await GroupMessage.find({ groupId }).populate('from').populate('readBy');
+        const groups= await Group.find({ members: req.user._id }).populate('members');
+        if (chats) {
+            chats.forEach(msg => {
+                msg.isRead = msg.readBy.includes(req.user._id);
+            });
+        }
+
+        if (!group) return res.status(404).send('Group not found');
+
+        // Optional: Add messages when group chat messages are implemented
+        res.render('group.ejs', { group, currentUser: req.user, users,chats,groups});
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading group chat');
     }
 });
 // Start server
